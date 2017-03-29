@@ -12,7 +12,6 @@ public class ServerForwardThread extends Thread {
     private HashMap<String, InputStream> inputStreams;
     private OutputStream outputStream;
     private ClientThread clientThread;
-    private boolean sendStatus;
 
     public ServerForwardThread(ClientThread clientThread, HashMap<String, InputStream> inputStreams,
                                OutputStream outputStream) {
@@ -24,7 +23,7 @@ public class ServerForwardThread extends Thread {
     @Override
     public void run() {
         System.out.println("Forward thread is starting...");
-        sendStatus = false;
+        boolean sendStatus = false;
         byte[] buffer = new byte[BUFFER_SIZE];
         int byteReads;
 
