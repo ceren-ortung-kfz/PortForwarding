@@ -57,10 +57,12 @@ public class ClientThread extends Thread {
                 sockets.add(serverSocket);
             }
 
-            ClientForwardThread clientForward = new ClientForwardThread(this, clientIn, serverOutputStreams);
+            ClientForwardThread clientForward =
+                    new ClientForwardThread(this, clientIn, serverOutputStreams);
             clientForward.start();
 
-            ServerForwardThread serverForward = new ServerForwardThread(this, serverInputStreams, clientOut);
+            ServerForwardThread serverForward =
+                    new ServerForwardThread(this, serverInputStreams, clientOut);
             serverForward.start();
         }
         catch (IOException ie) {
