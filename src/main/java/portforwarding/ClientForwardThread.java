@@ -3,22 +3,26 @@ package portforwarding;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
-public class ForwardThread extends Thread {
+public class ClientForwardThread extends Thread {
     private static final int BUFFER_SIZE = 1024;
 
     private InputStream inputStream;
-    private OutputStream outputStream;
+    private HashMap<String, OutputStream> outputStreams;
     private ClientThread clientThread;
 
-    public ForwardThread(ClientThread clientThread, InputStream inputStream, OutputStream outputStream) {
+    public ClientForwardThread(ClientThread clientThread, InputStream inputStream,
+                               HashMap<String, OutputStream> outputStreams) {
         this.clientThread = clientThread;
         this.inputStream = inputStream;
-        this.outputStream = outputStream;
+        this.outputStreams = outputStreams;
     }
 
     @Override
     public void run() {
+        System.out.println("ClientForward thread is starting...");
         byte[] buffer = new byte[BUFFER_SIZE];
         int byteReads;
 
@@ -29,14 +33,10 @@ public class ForwardThread extends Thread {
                     break;
                 }
 
-                outputStream.write(buffer, 0, byteReads);
-                outputStream.flush();
-
-                try {
-                    Thread.sleep(1000);
-                }
-                catch (InterruptedException ie) {
-                    ie.printStackTrace();
+                for (Map.Entry entry: outputStreams.entrySet()) {
+                    OutputStream outputStream = (OutputStream)entry.getValue();
+                    outputStream.write(buffer, 0, byteReads);
+                    outputStream.flush();
                 }
             }
         }

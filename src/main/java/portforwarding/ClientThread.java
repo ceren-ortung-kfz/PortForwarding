@@ -4,19 +4,25 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ClientThread extends Thread {
     private Socket clientSocket;
-    private Socket serverSocket;
+    private HashMap<Integer, String> destinations;
+    private ArrayList<Socket> sockets;
+    private HashMap<String, InputStream> serverInputStreams;
+    private HashMap<String, OutputStream> serverOutputStreams;
 
-    private String host;
-    private int port;
     private boolean forwardingActive = false;
 
-    public ClientThread(Socket clientSocket, String host, int port) {
+    public ClientThread(Socket clientSocket, HashMap<Integer, String> destinations) {
         this.clientSocket = clientSocket;
-        this.host = host;
-        this.port = port;
+        this.destinations = destinations;
+        sockets = new ArrayList<>();
+        serverInputStreams = new HashMap<>();
+        serverOutputStreams = new HashMap<>();
     }
 
     @Override
@@ -30,54 +36,39 @@ public class ClientThread extends Thread {
         OutputStream serverOut;
 
         try {
-            serverSocket = new Socket(this.host, this.port);
-
-            serverSocket.setKeepAlive(true);
-            clientSocket.setKeepAlive(true);
 
             clientIn = clientSocket.getInputStream();
             clientOut = clientSocket.getOutputStream();
 
-            serverIn = serverSocket.getInputStream();
-            serverOut = serverSocket.getOutputStream();
-        }
-        catch (IOException ioe) {
-            System.err.println("Connection failed");
-            return;
-        }
+            clientSocket.setKeepAlive(true);
 
-        forwardingActive = true;
-        ForwardThread clientForward = new ForwardThread(this, clientIn, serverOut);
-        clientForward.start();
+            for (Map.Entry entry: destinations.entrySet()) {
 
-        ForwardThread serverForward = new ForwardThread(this, serverIn, clientOut);
-        serverForward.start();
+                System.out.println(entry.getValue() + ":" + entry.getKey());
+                Socket serverSocket = new Socket(entry.getValue().toString(), (int)entry.getKey());
+                serverSocket.setKeepAlive(true);
+
+                serverIn = serverSocket.getInputStream();
+                serverInputStreams.put(entry.getKey().toString(), serverIn);
+
+                serverOut = serverSocket.getOutputStream();
+                serverOutputStreams.put(entry.getKey().toString(), serverOut);
+
+                sockets.add(serverSocket);
+            }
+
+            ClientForwardThread clientForward = new ClientForwardThread(this, clientIn, serverOutputStreams);
+            clientForward.start();
+
+            ServerForwardThread serverForward = new ServerForwardThread(this, serverInputStreams, clientOut);
+            serverForward.start();
+        }
+        catch (IOException ie) {
+            ie.printStackTrace();
+        }
     }
 
     public synchronized void closeConnection() {
-        try {
-            serverSocket.close();
-        }
-        catch (Exception e) {
-            System.err.println("Client thread server socket close error");
-            e.printStackTrace();
-        }
 
-        try {
-            clientSocket.close();
-        }
-        catch (Exception e) {
-            System.err.println("Client thread client socket close error");
-            e.printStackTrace();
-        }
-
-        if (forwardingActive) {
-            System.out.println("TCP Forwarding " +
-                    clientSocket.getInetAddress().getHostAddress()
-                    + ":" + clientSocket.getPort() + " <--> " +
-                    serverSocket.getInetAddress().getHostAddress()
-                    + ":" + serverSocket.getPort() + " stopped.");
-            forwardingActive = false;
-        }
     }
 }
