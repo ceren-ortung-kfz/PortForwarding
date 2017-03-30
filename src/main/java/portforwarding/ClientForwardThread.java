@@ -3,18 +3,18 @@ package portforwarding;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
+import java.net.SocketException;
 import java.util.Map;
 
 public class ClientForwardThread extends Thread {
     private static final int BUFFER_SIZE = 1024;
 
     private InputStream inputStream;
-    private HashMap<String, OutputStream> outputStreams;
+    private Map<String, OutputStream> outputStreams;
     private ClientThread clientThread;
 
     public ClientForwardThread(ClientThread clientThread, InputStream inputStream,
-                               HashMap<String, OutputStream> outputStreams) {
+                               Map<String, OutputStream> outputStreams) {
         this.clientThread = clientThread;
         this.inputStream = inputStream;
         this.outputStreams = outputStreams;
@@ -33,15 +33,20 @@ public class ClientForwardThread extends Thread {
                     break;
                 }
 
-                for (Map.Entry entry: outputStreams.entrySet()) {
-                    OutputStream outputStream = (OutputStream)entry.getValue();
-                    outputStream.write(buffer, 0, byteReads);
-                    outputStream.flush();
+                for (Map.Entry entry : outputStreams.entrySet()) {
+                    try {
+                        OutputStream outputStream = (OutputStream) entry.getValue();
+                        outputStream.write(buffer, 0, byteReads);
+                        outputStream.flush();
+                    }
+                    catch (SocketException se) {
+                        System.err.println("Outputstream write error port: " + entry.getKey().toString());
+                    }
                 }
             }
         }
         catch (IOException ioe) {
-            System.err.println("Connection is broken");
+            System.err.println("Connection is broken client");
         }
 
         clientThread.closeConnection();

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.Map;
 
 public class PortForwarding {
 
@@ -13,7 +14,7 @@ public class PortForwarding {
     public static void main(String[] args) throws IOException {
         System.out.println("Port forwarding is starting...");
 
-        HashMap<Integer, String> destinations = new HashMap<>();
+        Map<Integer, String> destinations = new HashMap<>();
         destinations.put(10041, "127.0.0.1");
         destinations.put(10042, "127.0.0.1");
 

@@ -4,20 +4,22 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ClientThread extends Thread {
     private Socket clientSocket;
-    private HashMap<Integer, String> destinations;
-    private ArrayList<Socket> sockets;
-    private HashMap<String, InputStream> serverInputStreams;
-    private HashMap<String, OutputStream> serverOutputStreams;
+    private Map<Integer, String> destinations;
+    private List<Socket> sockets;
+    private Map<String, InputStream> serverInputStreams;
+    private Map<String, OutputStream> serverOutputStreams;
+    private ClientForwardThread clientForward;
+    private ServerForwardThread serverForward;
 
-    private boolean forwardingActive = false;
-
-    public ClientThread(Socket clientSocket, HashMap<Integer, String> destinations) {
+    public ClientThread(Socket clientSocket, Map<Integer, String> destinations) {
         this.clientSocket = clientSocket;
         this.destinations = destinations;
         sockets = new ArrayList<>();
@@ -45,6 +47,7 @@ public class ClientThread extends Thread {
             for (Map.Entry entry: destinations.entrySet()) {
 
                 System.out.println(entry.getValue() + ":" + entry.getKey());
+
                 Socket serverSocket = new Socket(entry.getValue().toString(), (int)entry.getKey());
                 serverSocket.setKeepAlive(true);
 
@@ -57,12 +60,10 @@ public class ClientThread extends Thread {
                 sockets.add(serverSocket);
             }
 
-            ClientForwardThread clientForward =
-                    new ClientForwardThread(this, clientIn, serverOutputStreams);
+            clientForward = new ClientForwardThread(this, clientIn, serverOutputStreams);
             clientForward.start();
 
-            ServerForwardThread serverForward =
-                    new ServerForwardThread(this, serverInputStreams, clientOut);
+            serverForward = new ServerForwardThread(serverInputStreams, clientOut);
             serverForward.start();
         }
         catch (IOException ie) {
@@ -72,5 +73,31 @@ public class ClientThread extends Thread {
 
     public synchronized void closeConnection() {
 
+        System.out.println(Thread.activeCount());
+
+        clientForward.interrupt();
+        serverForward.interrupt();
+
+        System.out.println(Thread.activeCount());
+
+        try {
+            for (Socket socket: sockets) {
+                socket.close();
+            }
+            sockets.clear();
+        }
+        catch (IOException ie) {
+            System.err.println("Server socket close error...");
+            ie.printStackTrace();
+        }
+
+        try {
+            clientSocket.close();
+            System.out.println("Closed client connection...");
+        }
+        catch (IOException ie) {
+            System.err.println("Client close error...");
+            ie.printStackTrace();
+        }
     }
 }
