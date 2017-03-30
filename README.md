@@ -1,9 +1,14 @@
 # JavaPortForwarding
 This script forwards a number of configured local ports to local or remote ports to remote.
 
-## Build
+## Build Project
 ```sh
 ./gradlew build
+```
+
+## Run with gradle
+```sh
+./gradlew execute -PappArgs=10040,127.0.0.1:10041
 ```
 
 ## Run
