@@ -50,6 +50,7 @@ public class ClientForwardThread extends Thread {
                         System.err.println("Outputstream write error port: " + entry.getKey());
 
                         if (outputStreams.size() < 1) {
+                            Thread.currentThread().interrupt();
                             clientThread.closeConnection();
                         }
                     }

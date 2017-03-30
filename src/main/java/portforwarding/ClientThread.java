@@ -19,6 +19,7 @@ public class ClientThread extends Thread {
     private Map<String, OutputStream> serverOutputStreams;
     private ClientForwardThread clientForward;
     private ServerForwardThread serverForward;
+    private boolean forwardingActive = false;
 
     public ClientThread(Socket clientSocket, Map<Integer, String> destinations) {
         this.clientSocket = clientSocket;
@@ -69,10 +70,12 @@ public class ClientThread extends Thread {
                 }
             }
 
+            forwardingActive = true;
+
             clientForward = new ClientForwardThread(this, clientIn, serverOutputStreams);
             clientForward.start();
 
-            serverForward = new ServerForwardThread(serverInputStreams, clientOut);
+            serverForward = new ServerForwardThread(this, serverInputStreams, clientOut);
             serverForward.start();
         }
         catch (IOException ie) {
@@ -84,6 +87,8 @@ public class ClientThread extends Thread {
 
         clientForward.interrupt();
         serverForward.interrupt();
+
+        forwardingActive = false;
 
         try {
             for (Socket socket: sockets) {
@@ -104,5 +109,9 @@ public class ClientThread extends Thread {
             System.err.println("Client close error...");
             ie.printStackTrace();
         }
+    }
+
+    public synchronized boolean forwardingStatus() {
+        return forwardingActive;
     }
 }

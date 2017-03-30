@@ -12,9 +12,11 @@ public class ServerForwardThread extends Thread {
 
     private Map<String, InputStream> inputStreams;
     private OutputStream outputStream;
+    private ClientThread clientThread;
 
-    public ServerForwardThread(Map<String, InputStream> inputStreams,
+    public ServerForwardThread(ClientThread clientThread, Map<String, InputStream> inputStreams,
                                OutputStream outputStream) {
+        this.clientThread = clientThread;
         this.inputStreams = inputStreams;
         this.outputStream = outputStream;
     }
@@ -59,6 +61,10 @@ public class ServerForwardThread extends Thread {
                 }
 
                 sendStatus = false;
+
+                if (!clientThread.forwardingStatus()) {
+                    break;
+                }
             }
             catch (IOException ioe) {
                 System.err.println("Connection is broken server");
