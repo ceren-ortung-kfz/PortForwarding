@@ -22,6 +22,25 @@ public class ClientForwardThread extends Thread {
     }
 
     @Override
+    public void interrupt() {
+        super.interrupt();
+
+        System.out.println("Interrupted ClientForward thread...");
+
+        for(Map.Entry<String, OutputStream> entry : outputStreams.entrySet()) {
+            try {
+                OutputStream os = entry.getValue();
+                os.close();
+
+                inputStream.close();
+            }
+            catch (IOException ie) {
+                ie.printStackTrace();
+            }
+        }
+    }
+
+    @Override
     public void run() {
         System.out.println("ClientForward thread is starting...");
         byte[] buffer = new byte[BUFFER_SIZE];

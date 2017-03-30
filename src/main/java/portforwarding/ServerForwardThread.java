@@ -22,6 +22,25 @@ public class ServerForwardThread extends Thread {
     }
 
     @Override
+    public void interrupt() {
+        super.interrupt();
+
+        System.out.println("Interrupted ServerForward thread...");
+
+        for(Map.Entry<String, InputStream> entry : inputStreams.entrySet()) {
+            try {
+                InputStream is = entry.getValue();
+                is.close();
+
+                outputStream.close();
+            }
+            catch (IOException ie) {
+                ie.printStackTrace();
+            }
+        }
+    }
+
+    @Override
     public void run() {
         System.out.println("ServerForward thread is starting...");
         boolean sendStatus = false;
@@ -51,7 +70,7 @@ public class ServerForwardThread extends Thread {
                     } catch (SocketException se) {
 
                         if (se.getMessage().equalsIgnoreCase("socket closed")) {
-                            System.err.println("Socket closed...");
+                            System.out.println("Socket closed...");
                             inputStreams.clear();
                             break;
                         }

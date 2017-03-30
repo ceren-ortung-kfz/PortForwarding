@@ -56,7 +56,6 @@ public class PortForwarding {
 
                 ClientThread clientThread = new ClientThread(clientSocket, destinations);
                 clientThread.start();
-                clientThread.join();
             }
             catch (Exception err) {
                 System.err.println("Server closed...");

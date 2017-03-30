@@ -109,6 +109,8 @@ public class ClientThread extends Thread {
             System.err.println("Client close error...");
             ie.printStackTrace();
         }
+
+        this.interrupt();
     }
 
     public synchronized boolean forwardingStatus() {
