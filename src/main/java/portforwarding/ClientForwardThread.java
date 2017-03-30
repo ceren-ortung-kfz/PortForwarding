@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.SocketException;
+import java.util.Iterator;
 import java.util.Map;
 
 public class ClientForwardThread extends Thread {
@@ -33,14 +34,24 @@ public class ClientForwardThread extends Thread {
                     break;
                 }
 
-                for (Map.Entry entry : outputStreams.entrySet()) {
+                Iterator it = outputStreams.entrySet().iterator();
+
+                while (it.hasNext()) {
+                    Map.Entry entry = (Map.Entry)it.next();
+
                     try {
                         OutputStream outputStream = (OutputStream) entry.getValue();
                         outputStream.write(buffer, 0, byteReads);
                         outputStream.flush();
                     }
                     catch (SocketException se) {
-                        System.err.println("Outputstream write error port: " + entry.getKey().toString());
+                        it.remove();
+
+                        System.err.println("Outputstream write error port: " + entry.getKey());
+
+                        if (outputStreams.size() < 1) {
+                            clientThread.closeConnection();
+                        }
                     }
                 }
             }

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.SocketException;
+import java.util.Iterator;
 import java.util.Map;
 
 public class ServerForwardThread extends Thread {
@@ -20,18 +21,23 @@ public class ServerForwardThread extends Thread {
 
     @Override
     public void run() {
-        System.out.println("Forward thread is starting...");
+        System.out.println("ServerForward thread is starting...");
         boolean sendStatus = false;
         byte[] buffer = new byte[BUFFER_SIZE];
         int byteReads;
 
-        try {
-            while (true) {
-                for (Map.Entry entry: inputStreams.entrySet()) {
+        while (true) {
+            try {
+                Iterator it = inputStreams.entrySet().iterator();
+                while (it.hasNext()) {
                     try {
+                        Map.Entry entry = (Map.Entry) it.next();
+
                         InputStream inInputStream = (InputStream) entry.getValue();
                         byteReads = inInputStream.read(buffer);
+
                         if (byteReads == -1) {
+                            it.remove();
                             break;
                         }
 
@@ -40,8 +46,7 @@ public class ServerForwardThread extends Thread {
                             outputStream.flush();
                             sendStatus = true;
                         }
-                    }
-                    catch (SocketException se) {
+                    } catch (SocketException se) {
 
                         if (se.getMessage().equalsIgnoreCase("socket closed")) {
                             System.err.println("Socket closed...");
@@ -55,9 +60,10 @@ public class ServerForwardThread extends Thread {
 
                 sendStatus = false;
             }
-        }
-        catch (IOException ioe) {
-            System.err.println("Connection is broken server");
+            catch (IOException ioe) {
+                System.err.println("Connection is broken server");
+                break;
+            }
         }
     }
 }

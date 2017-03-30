@@ -3,12 +3,13 @@ package portforwarding;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.ConnectException;
 import java.net.Socket;
-import java.net.SocketException;
+import java.util.Map;
+import java.util.List;
+import java.util.TreeMap;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class ClientThread extends Thread {
     private Socket clientSocket;
@@ -23,7 +24,7 @@ public class ClientThread extends Thread {
         this.clientSocket = clientSocket;
         this.destinations = destinations;
         sockets = new ArrayList<>();
-        serverInputStreams = new HashMap<>();
+        serverInputStreams = new TreeMap<>();
         serverOutputStreams = new HashMap<>();
     }
 
@@ -46,18 +47,26 @@ public class ClientThread extends Thread {
 
             for (Map.Entry entry: destinations.entrySet()) {
 
-                System.out.println(entry.getValue() + ":" + entry.getKey());
+                System.out.println("Connecting to " + entry.getValue() + ":" + entry.getKey());
 
-                Socket serverSocket = new Socket(entry.getValue().toString(), (int)entry.getKey());
-                serverSocket.setKeepAlive(true);
+                try {
+                    Socket serverSocket = new Socket(entry.getValue().toString(), (int) entry.getKey());
+                    serverSocket.setKeepAlive(true);
 
-                serverIn = serverSocket.getInputStream();
-                serverInputStreams.put(entry.getKey().toString(), serverIn);
+                    serverIn = serverSocket.getInputStream();
+                    serverInputStreams.put(entry.getKey().toString(), serverIn);
 
-                serverOut = serverSocket.getOutputStream();
-                serverOutputStreams.put(entry.getKey().toString(), serverOut);
+                    serverOut = serverSocket.getOutputStream();
+                    serverOutputStreams.put(entry.getKey().toString(), serverOut);
 
-                sockets.add(serverSocket);
+                    sockets.add(serverSocket);
+                    System.out.println("Connected...");
+                }
+                catch (ConnectException ce) {
+                    clientSocket.close();
+                    System.err.println("Connection failed: " + entry.getValue() + ":" + entry.getKey());
+                    System.exit(1);
+                }
             }
 
             clientForward = new ClientForwardThread(this, clientIn, serverOutputStreams);
@@ -73,12 +82,8 @@ public class ClientThread extends Thread {
 
     public synchronized void closeConnection() {
 
-        System.out.println(Thread.activeCount());
-
         clientForward.interrupt();
         serverForward.interrupt();
-
-        System.out.println(Thread.activeCount());
 
         try {
             for (Socket socket: sockets) {
