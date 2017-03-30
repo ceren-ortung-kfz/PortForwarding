@@ -18,7 +18,13 @@ task initSourceFolders {
     sourceSets*.resources.srcDirs*.each { it.mkdirs() }
 }
 
-task execute(type:JavaExec) {
+task execute(type:JavaExec, dependsOn: classes) {
+    if (project.hasProperty('appArgs')) {
+        args(appArgs.split(","))
+    }
+
+    println args
+
     main = "portforwarding.PortForwarding"
     classpath = sourceSets.main.runtimeClasspath
 }
