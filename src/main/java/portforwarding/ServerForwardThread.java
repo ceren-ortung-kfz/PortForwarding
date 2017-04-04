@@ -44,7 +44,7 @@ public class ServerForwardThread extends Thread {
     public void run() {
         System.out.println("ServerForward thread is starting...");
         boolean sendStatus = false;
-        byte[] buffer = new byte[BUFFER_SIZE];
+        byte[] buffer;
         int byteReads;
 
         while (true) {
@@ -52,6 +52,7 @@ public class ServerForwardThread extends Thread {
                 Iterator it = inputStreams.entrySet().iterator();
                 while (it.hasNext()) {
                     try {
+                        buffer = new byte[BUFFER_SIZE];
                         Map.Entry entry = (Map.Entry) it.next();
 
                         InputStream inInputStream = (InputStream) entry.getValue();

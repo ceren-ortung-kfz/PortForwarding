@@ -23,8 +23,6 @@ task execute(type:JavaExec, dependsOn: classes) {
         args(appArgs.split(","))
     }
 
-    println args
-
     main = "portforwarding.PortForwarding"
     classpath = sourceSets.main.runtimeClasspath
 }
