@@ -65,8 +65,7 @@ public class ClientForwardThread extends Thread {
                     }
                     catch (SocketException se) {
                         it.remove();
-
-                        System.err.println("Outputstream write error port: " + entry.getKey());
+                        System.err.println("Outputstream write error: " + entry.getKey());
 
                         if (outputStreams.size() < 1) {
                             Thread.currentThread().interrupt();

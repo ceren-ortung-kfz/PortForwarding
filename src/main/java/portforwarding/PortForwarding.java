@@ -4,8 +4,8 @@ package portforwarding;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,7 +24,7 @@ public class PortForwarding {
         System.out.println("Port forwarding is starting...");
         int sourcePort = Integer.valueOf(args[0]);
 
-        Map<Integer, String> destinations = new HashMap<>();
+        List<String> destinations = new ArrayList<>();
 
         int num;
         Pattern pattern;
@@ -36,7 +36,7 @@ public class PortForwarding {
 
             if (matcher.find()) {
                 System.out.println("Added: " + target[0] + ":" + target[1]);
-                destinations.put(Integer.valueOf(target[1]), target[0]);
+                destinations.add(target[0] + ":" + target[1]);
             }
             else {
                 System.err.println("Invalid ip adress: " + args[num]);

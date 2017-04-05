@@ -13,7 +13,7 @@ import java.util.HashMap;
 
 public class ClientThread extends Thread {
     private Socket clientSocket;
-    private Map<Integer, String> destinations;
+    private List<String> destinations;
     private List<Socket> sockets;
     private Map<String, InputStream> serverInputStreams;
     private Map<String, OutputStream> serverOutputStreams;
@@ -21,7 +21,7 @@ public class ClientThread extends Thread {
     private ServerForwardThread serverForward;
     private boolean forwardingActive = false;
 
-    public ClientThread(Socket clientSocket, Map<Integer, String> destinations) {
+    public ClientThread(Socket clientSocket, List<String> destinations) {
         this.clientSocket = clientSocket;
         this.destinations = destinations;
         sockets = new ArrayList<>();
@@ -46,26 +46,31 @@ public class ClientThread extends Thread {
 
             clientSocket.setKeepAlive(true);
 
-            for (Map.Entry entry: destinations.entrySet()) {
+            int i;
+            String destination;
+            for (i=0; i < destinations.size(); i++) {
 
-                System.out.println("Connecting to " + entry.getValue() + ":" + entry.getKey());
+                destination = destinations.get(i);
+                String[] ip_port_arr = destination.split(":");
+
+                System.out.println("Connecting to " + destination);
 
                 try {
-                    Socket serverSocket = new Socket(entry.getValue().toString(), (int) entry.getKey());
+                    Socket serverSocket = new Socket(ip_port_arr[0], Integer.valueOf(ip_port_arr[1]));
                     serverSocket.setKeepAlive(true);
 
                     serverIn = serverSocket.getInputStream();
-                    serverInputStreams.put(entry.getKey().toString(), serverIn);
+                    serverInputStreams.put(i + "_" + destination, serverIn);
 
                     serverOut = serverSocket.getOutputStream();
-                    serverOutputStreams.put(entry.getKey().toString(), serverOut);
+                    serverOutputStreams.put(i + "_" + destination, serverOut);
 
                     sockets.add(serverSocket);
                     System.out.println("Connected...");
                 }
                 catch (ConnectException ce) {
                     clientSocket.close();
-                    System.err.println("Connection failed: " + entry.getValue() + ":" + entry.getKey());
+                    System.err.println("Connection failed: " + destination);
                     System.exit(1);
                 }
             }

@@ -64,6 +64,7 @@ public class ServerForwardThread extends Thread {
                         }
 
                         if (!sendStatus) {
+                            System.out.println(entry.getKey());
                             outputStream.write(buffer, 0, byteReads);
                             outputStream.flush();
                             sendStatus = true;
