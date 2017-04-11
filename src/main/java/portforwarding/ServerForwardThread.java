@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.net.SocketException;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.logging.Logger;
 
 public class ServerForwardThread extends Thread {
     private static final int BUFFER_SIZE = 1024;
@@ -13,6 +14,9 @@ public class ServerForwardThread extends Thread {
     private Map<String, InputStream> inputStreams;
     private OutputStream outputStream;
     private ClientThread clientThread;
+
+    private static final Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+    private static String stdout;
 
     public ServerForwardThread(ClientThread clientThread, Map<String, InputStream> inputStreams,
                                OutputStream outputStream) {
@@ -25,7 +29,9 @@ public class ServerForwardThread extends Thread {
     public void interrupt() {
         super.interrupt();
 
-        System.out.println("Interrupted ServerForward thread...");
+        stdout = "Interrupted ServerForward thread...";
+        System.out.println(stdout);
+        logger.info(stdout);
 
         for(Map.Entry<String, InputStream> entry : inputStreams.entrySet()) {
             try {
@@ -35,6 +41,7 @@ public class ServerForwardThread extends Thread {
                 outputStream.close();
             }
             catch (IOException ie) {
+                logger.severe(ie.getMessage());
                 ie.printStackTrace();
             }
         }
@@ -42,7 +49,9 @@ public class ServerForwardThread extends Thread {
 
     @Override
     public void run() {
-        System.out.println("ServerForward thread is starting...");
+        stdout = "ServerForward thread is starting...";
+        System.out.println(stdout);
+        logger.info(stdout);
         boolean sendStatus = false;
         byte[] buffer;
         int byteReads;
@@ -72,12 +81,16 @@ public class ServerForwardThread extends Thread {
                     } catch (SocketException se) {
 
                         if (se.getMessage().equalsIgnoreCase("socket closed")) {
-                            System.out.println("Socket closed...");
+                            stdout = "Socket closed...";
+                            System.out.println(stdout);
+                            logger.severe(stdout);
                             inputStreams.clear();
                             break;
                         }
 
-                        System.err.println("Server input stream read error");
+                        stdout = "Server input stream read error";
+                        System.err.println(stdout);
+                        logger.severe(stdout);
                     }
                 }
 
@@ -88,7 +101,9 @@ public class ServerForwardThread extends Thread {
                 }
             }
             catch (IOException ioe) {
-                System.err.println("Connection is broken server");
+                stdout = "Connection is broken server";
+                System.err.println(stdout);
+                logger.severe(stdout);
                 break;
             }
         }

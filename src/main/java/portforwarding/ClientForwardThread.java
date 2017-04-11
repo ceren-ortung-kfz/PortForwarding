@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.net.SocketException;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.logging.Logger;
 
 public class ClientForwardThread extends Thread {
     private static final int BUFFER_SIZE = 1024;
@@ -13,6 +14,9 @@ public class ClientForwardThread extends Thread {
     private InputStream inputStream;
     private Map<String, OutputStream> outputStreams;
     private ClientThread clientThread;
+
+    private static final Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+    private static String stdout;
 
     public ClientForwardThread(ClientThread clientThread, InputStream inputStream,
                                Map<String, OutputStream> outputStreams) {
@@ -25,7 +29,9 @@ public class ClientForwardThread extends Thread {
     public void interrupt() {
         super.interrupt();
 
-        System.out.println("Interrupted ClientForward thread...");
+        stdout = "Interrupted ClientForward thread...";
+        System.out.println(stdout);
+        logger.info(stdout);
 
         for(Map.Entry<String, OutputStream> entry : outputStreams.entrySet()) {
             try {
@@ -35,6 +41,7 @@ public class ClientForwardThread extends Thread {
                 inputStream.close();
             }
             catch (IOException ie) {
+                logger.severe(ie.getMessage());
                 ie.printStackTrace();
             }
         }
@@ -42,7 +49,9 @@ public class ClientForwardThread extends Thread {
 
     @Override
     public void run() {
-        System.out.println("ClientForward thread is starting...");
+        stdout = "ClientForward thread is starting...";
+        System.out.println(stdout);
+        logger.info(stdout);
         byte[] buffer = new byte[BUFFER_SIZE];
         int byteReads;
 
@@ -65,7 +74,9 @@ public class ClientForwardThread extends Thread {
                     }
                     catch (SocketException se) {
                         it.remove();
-                        System.err.println("Outputstream write error: " + entry.getKey());
+                        stdout = String.format("Outputstream write error port: %s", entry.getKey());
+                        System.err.println(stdout);
+                        logger.severe(stdout);
 
                         if (outputStreams.size() < 1) {
                             Thread.currentThread().interrupt();
@@ -76,7 +87,9 @@ public class ClientForwardThread extends Thread {
             }
         }
         catch (IOException ioe) {
-            System.err.println("Connection is broken client");
+            stdout = "Connection is broken client";
+            System.err.println(stdout);
+            logger.severe(stdout);
         }
 
         clientThread.closeConnection();

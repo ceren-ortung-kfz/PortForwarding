@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.TreeMap;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.logging.Logger;
 
 public class ClientThread extends Thread {
     private Socket clientSocket;
@@ -21,6 +22,9 @@ public class ClientThread extends Thread {
     private ServerForwardThread serverForward;
     private boolean forwardingActive = false;
 
+    private static final Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+    private static String stdout;
+
     public ClientThread(Socket clientSocket, List<String> destinations) {
         this.clientSocket = clientSocket;
         this.destinations = destinations;
@@ -31,7 +35,9 @@ public class ClientThread extends Thread {
 
     @Override
     public void run() {
-        System.out.println("Started client thread...");
+        stdout = "Started client thread...";
+        System.out.println(stdout);
+        logger.info(stdout);
 
         InputStream clientIn;
         OutputStream clientOut;
@@ -53,7 +59,9 @@ public class ClientThread extends Thread {
                 destination = destinations.get(i);
                 String[] ip_port_arr = destination.split(":");
 
-                System.out.println("Connecting to " + destination);
+                stdout = String.format("Connecting to %s", destination);
+                System.out.println(stdout);
+                logger.info(stdout);
 
                 try {
                     Socket serverSocket = new Socket(ip_port_arr[0], Integer.valueOf(ip_port_arr[1]));
@@ -66,11 +74,17 @@ public class ClientThread extends Thread {
                     serverOutputStreams.put(i + "_" + destination, serverOut);
 
                     sockets.add(serverSocket);
-                    System.out.println("Connected...");
+
+                    stdout = "Connected";
+                    System.out.println(stdout);
+                    logger.info(stdout);
                 }
                 catch (ConnectException ce) {
                     clientSocket.close();
-                    System.err.println("Connection failed: " + destination);
+
+                    stdout = String.format("Connection failed: %s", destination);
+                    System.err.println(stdout);
+                    logger.severe(stdout);
                     System.exit(1);
                 }
             }
@@ -102,16 +116,22 @@ public class ClientThread extends Thread {
             sockets.clear();
         }
         catch (IOException ie) {
-            System.err.println("Server socket close error...");
+            stdout = "Server socket close error...";
+            System.err.println(stdout);
+            logger.severe(stdout);
             ie.printStackTrace();
         }
 
         try {
             clientSocket.close();
-            System.out.println("Closed client connection...");
+            stdout = "Closed client connection...";
+            System.out.println(stdout);
+            logger.info(stdout);
         }
         catch (IOException ie) {
-            System.err.println("Client close error...");
+            stdout = "Client close error...";
+            System.err.println(stdout);
+            logger.severe(stdout);
             ie.printStackTrace();
         }
 
